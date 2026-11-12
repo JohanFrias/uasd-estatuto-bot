@@ -39,8 +39,8 @@ async function main() {
   const retriever = await loadRetriever();
   await db.init();
 
-  if (!config.openai.apiKey) {
-    console.warn('[ai] OPENAI_API_KEY vacía: el chatbot usará el modo básico (sin redacción con IA).');
+  if (!config.ai.apiKey) {
+    console.warn(`[ai] Falta la clave del proveedor ${config.ai.provider}; el chatbot usará el modo básico.`);
   }
 
   const app = express();

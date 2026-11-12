@@ -12,6 +12,13 @@ const toNumber = (value, fallback) => {
   return value === undefined || value === '' || Number.isNaN(n) ? fallback : n;
 };
 
+const geminiApiKey = process.env.GEMINI_API_KEY || '';
+const openaiApiKey = process.env.OPENAI_API_KEY || '';
+const aiProvider = process.env.AI_PROVIDER || (geminiApiKey ? 'gemini' : 'openai');
+if (!['gemini', 'openai'].includes(aiProvider)) {
+  throw new Error('AI_PROVIDER debe ser "gemini" o "openai".');
+}
+
 module.exports = {
   port: toNumber(process.env.PORT, 3000),
   trustProxy: process.env.TRUST_PROXY === 'true' ? 1 : false,
@@ -23,9 +30,13 @@ module.exports = {
       .filter(Boolean),
   },
 
-  openai: {
-    apiKey: process.env.OPENAI_API_KEY || '',
-    model: process.env.OPENAI_MODEL || 'gpt-4o-mini',
+  ai: {
+    provider: aiProvider,
+    apiKey: aiProvider === 'gemini' ? geminiApiKey : openaiApiKey,
+    model:
+      aiProvider === 'gemini'
+        ? process.env.GEMINI_MODEL || 'gemini-3.8-flash'
+        : process.env.OPENAI_MODEL || 'gpt-4o-mini',
     maxTokens: toNumber(process.env.MAX_TOKENS, 700),
     timeoutMs: 30000,
   },

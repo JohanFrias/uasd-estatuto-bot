@@ -124,7 +124,7 @@ async function handleChat(body, { retriever, ai, db, config }) {
       question: message,
       items: search.items,
       history,
-      config: config.openai,
+      config: config.ai || config.openai,
     });
     answer = result.answer;
     mode = result.mode;

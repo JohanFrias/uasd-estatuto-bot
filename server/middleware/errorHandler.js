@@ -4,13 +4,13 @@ const { HttpError, AiError } = require('../utils/errors');
 
 /** Mensajes amigables para cada tipo de fallo de la IA. */
 const AI_MESSAGES = {
-  auth: [500, 'La clave de la API de IA no es válida o no tiene permisos. Revisa OPENAI_API_KEY en el archivo .env.'],
-  billing: [503, 'La cuenta de OpenAI no tiene crédito o cuota disponible. Revisa la facturación y los límites del proyecto asociado a la clave.'],
+  auth: [500, 'La clave de la API de IA no es válida o no tiene permisos. Revisa la clave configurada en el servidor.'],
+  billing: [503, 'La cuenta del proveedor de IA no tiene crédito o cuota disponible. Revisa la facturación y los límites del proyecto asociado a la clave.'],
   rate_limit: [429, 'La IA recibió demasiadas consultas. Espera unos segundos e inténtalo de nuevo.'],
   overloaded: [503, 'El servicio de IA está ocupado en este momento. Inténtalo de nuevo en un momento.'],
   timeout: [504, 'La IA tardó demasiado en responder. Inténtalo de nuevo.'],
   network: [502, 'No se pudo conectar con el servicio de IA. Verifica la conexión a internet del servidor.'],
-  bad_request: [502, 'La IA no pudo procesar la consulta. Revisa el modelo configurado (OPENAI_MODEL).'],
+  bad_request: [502, 'La IA no pudo procesar la consulta. Revisa el modelo configurado para el proveedor.'],
   empty: [502, 'La IA no generó una respuesta. Intenta reformular la pregunta.'],
 };
 

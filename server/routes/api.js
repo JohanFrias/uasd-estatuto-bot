@@ -42,7 +42,7 @@ function createApiRouter(deps) {
   router.get('/health', (req, res) => {
     res.json({
       ok: true,
-      ai: Boolean(config.openai.apiKey),
+      ai: Boolean(config.ai.apiKey),
       db: deps.db.isAvailable(),
       fragments: deps.retriever ? deps.retriever.size : 0,
     });

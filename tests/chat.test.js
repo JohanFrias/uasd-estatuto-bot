@@ -85,6 +85,81 @@ test('con información: envía los fragmentos a la IA y devuelve las fuentes cit
   assert.match(last.content, /PREGUNTA DEL USUARIO: ¿Cuáles son los derechos de los estudiantes\?/);
 });
 
+test('Gemini recibe instrucciones, fragmentos e historial y devuelve las fuentes citadas', async () => {
+  const requests = [];
+  const fetchImpl = async (url, options) => {
+    requests.push({ url, options });
+    return {
+      ok: true,
+      status: 200,
+      json: async () => ({
+        output: [
+          {
+            type: 'model_output',
+            content: [{ type: 'text', text: 'Los estudiantes tienen derecho de asociación (Art. 100).' }],
+          },
+        ],
+      }),
+    };
+  };
+  const geminiConfig = {
+    ...baseConfig,
+    ai: {
+      provider: 'gemini',
+      apiKey: 'gemini-test-key',
+      model: 'gemini-3.8-flash',
+      maxTokens: 700,
+      timeoutMs: 1000,
+    },
+  };
+  const geminiAi = {
+    generateAnswer: (args) => ai.generateAnswer({ ...args, fetchImpl }),
+  };
+  const res = await chat.handleChat(
+    {
+      message: '¿Cuáles son los derechos de los estudiantes?',
+      clientId: CLIENT,
+      history: [
+        { role: 'user', content: '¿Qué dice el Estatuto sobre estudiantes?' },
+        { role: 'assistant', content: 'El Estatuto contiene derechos y deberes.' },
+      ],
+    },
+    { retriever, ai: geminiAi, db: null, config: geminiConfig }
+  );
+
+  assert.equal(res.mode, 'ai');
+  assert.deepEqual(res.sources.map((source) => source.label), ['Artículo 100']);
+  assert.equal(requests[0].url, 'https://generativelanguage.googleapis.com/v1beta/interactions');
+  assert.equal(requests[0].options.headers['x-goog-api-key'], 'gemini-test-key');
+  assert.doesNotMatch(requests[0].url, /gemini-test-key/);
+  const sent = JSON.parse(requests[0].options.body);
+  assert.equal(sent.model, 'gemini-3.8-flash');
+  assert.match(sent.system_instruction, /ÚNICAMENTE/);
+  assert.equal(sent.generation_config.max_output_tokens, 700);
+  assert.equal(sent.store, false);
+  assert.deepEqual(sent.input.map((step) => step.type), ['user_input', 'model_output', 'user_input']);
+  assert.match(sent.input.at(-1).content[0].text, /\[Artículo 100/);
+  assert.match(sent.input.at(-1).content[0].text, /PREGUNTA DEL USUARIO: ¿Cuáles son los derechos de los estudiantes\?/);
+});
+
+test('Gemini clasifica una clave inválida como error de autenticación', async () => {
+  await assert.rejects(
+    ai.callGemini({
+      apiKey: 'invalid-key',
+      model: 'gemini-3.8-flash',
+      maxTokens: 700,
+      system: 'system',
+      messages: [{ role: 'user', content: 'question' }],
+      fetchImpl: async () => ({
+        ok: false,
+        status: 403,
+        json: async () => ({ error: { message: 'API key not valid' } }),
+      }),
+    }),
+    (error) => error instanceof AiError && error.kind === 'auth'
+  );
+});
+
 test('si la IA dice que no hay información, no se muestran fuentes', async () => {
   const f = fakeOpenAI('No encontré información suficiente en el Estatuto Orgánico para responder esa pregunta.');
   const res = await chat.handleChat(

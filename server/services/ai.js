@@ -1,11 +1,11 @@
 'use strict';
 
 /**
- * Integración con la API de OpenAI.
+ * Integración con OpenAI y Gemini.
  *
  * Patrón RAG: la IA NO responde de memoria; recibe los fragmentos del Estatuto
  * que encontró el buscador y solo puede usar esa información.
- * La clave se usa únicamente en el servidor mediante el SDK oficial.
+ * Las claves se usan únicamente en el servidor.
  */
 
 const OpenAI = require('openai');
@@ -111,6 +111,92 @@ async function callOpenAI({
   }
 }
 
+function classifyGeminiError(status, payload) {
+  const detail = payload?.error?.message || payload?.message || '';
+  const code = payload?.error?.status || '';
+  if (
+    status === 401 ||
+    status === 403 ||
+    /api key not valid|invalid api key|incorrect api key/i.test(detail)
+  ) {
+    return new AiError('auth', detail || 'Clave de Gemini inválida', status);
+  }
+  if (status === 429 || /resource_exhausted|quota/i.test(`${code} ${detail}`)) {
+    return new AiError('rate_limit', detail || 'Cuota o límite de Gemini alcanzado', status);
+  }
+  if (status === 503 || status === 529 || status >= 500) {
+    return new AiError('overloaded', detail || 'Servicio de Gemini no disponible', status);
+  }
+  if (status) return new AiError('bad_request', detail || `Error ${status} de Gemini`, status);
+  return new AiError('network', `No se pudo contactar Gemini: ${detail || 'error desconocido'}`);
+}
+
+function geminiResponseText(data) {
+  if (typeof data?.output_text === 'string') return data.output_text.trim();
+  const steps = Array.isArray(data?.output) ? data.output : Array.isArray(data?.steps) ? data.steps : [];
+  return steps
+    .flatMap((step) => (Array.isArray(step.content) ? step.content : []))
+    .filter((content) => content?.type === 'text' && typeof content.text === 'string')
+    .map((content) => content.text)
+    .join('')
+    .trim();
+}
+
+/** Llama a Gemini con su API de interacciones y una clave solo del servidor. */
+async function callGemini({
+  apiKey,
+  model,
+  maxTokens,
+  system,
+  messages,
+  timeoutMs = 30000,
+  fetchImpl = globalThis.fetch,
+}) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetchImpl('https://generativelanguage.googleapis.com/v1beta/interactions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'x-goog-api-key': apiKey,
+      },
+      body: JSON.stringify({
+        model,
+        system_instruction: system,
+        input: messages.map(({ role, content }) => ({
+          type: role === 'assistant' ? 'model_output' : 'user_input',
+          content: [{ type: 'text', text: content }],
+        })),
+        generation_config: { max_output_tokens: maxTokens },
+        store: false,
+      }),
+      signal: controller.signal,
+    });
+
+    let data;
+    try {
+      data = await response.json();
+    } catch (err) {
+      if (!response.ok) throw classifyGeminiError(response.status, {});
+      throw new AiError('bad_request', 'Gemini devolvió una respuesta no válida');
+    }
+    if (!response.ok) throw classifyGeminiError(response.status, data);
+
+    const text = geminiResponseText(data);
+    if (!text) throw new AiError('empty', 'Gemini devolvió una respuesta vacía');
+    return text;
+  } catch (err) {
+    if (err instanceof AiError) throw err;
+    if (err.name === 'AbortError' || controller.signal.aborted) {
+      throw new AiError('timeout', 'Gemini tardó demasiado en responder');
+    }
+    throw new AiError('network', `No se pudo contactar Gemini: ${err.message || 'error desconocido'}`);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 /** Respuesta sin IA (modo básico): muestra los artículos más relevantes. */
 function extractiveAnswer(items) {
   const top = items.slice(0, 2);
@@ -127,27 +213,31 @@ function extractiveAnswer(items) {
  * Genera la respuesta final.
  * @returns {{answer: string, mode: 'ai' | 'extractive'}}
  */
-async function generateAnswer({ question, items, history, config, clientFactory }) {
-  if (!config.apiKey) return { answer: extractiveAnswer(items), mode: 'extractive' };
+async function generateAnswer({ question, items, history, config, clientFactory, fetchImpl }) {
+  const aiConfig = config.ai || config.openai || config;
+  if (!aiConfig.apiKey) return { answer: extractiveAnswer(items), mode: 'extractive' };
 
   const userContent =
     `FRAGMENTOS DEL ESTATUTO:\n\n${formatPassages(items)}\n\n` +
     `===\nPREGUNTA DEL USUARIO: ${question}`;
 
   try {
-    const answer = await callOpenAI({
-      apiKey: config.apiKey,
-      model: config.model,
-      maxTokens: config.maxTokens,
-      timeoutMs: config.timeoutMs,
+    const options = {
+      apiKey: aiConfig.apiKey,
+      model: aiConfig.model,
+      maxTokens: aiConfig.maxTokens,
+      timeoutMs: aiConfig.timeoutMs,
       system: SYSTEM_PROMPT,
       messages: [...sanitizeHistory(history), { role: 'user', content: userContent }],
-      clientFactory,
-    });
+    };
+    const answer =
+      aiConfig.provider === 'gemini'
+        ? await callGemini({ ...options, fetchImpl })
+        : await callOpenAI({ ...options, clientFactory });
     return { answer, mode: 'ai' };
   } catch (err) {
     if (!(err instanceof AiError)) throw err;
-    console.warn(`[ai] ${err.kind}: ${err.message}; se responderá con fragmentos del Estatuto.`);
+    console.warn(`[ai/${aiConfig.provider || 'openai'}] ${err.kind}: ${err.message}; se responderá con fragmentos del Estatuto.`);
     return { answer: extractiveAnswer(items), mode: 'extractive' };
   }
 }
@@ -155,6 +245,7 @@ async function generateAnswer({ question, items, history, config, clientFactory 
 module.exports = {
   generateAnswer,
   callOpenAI,
+  callGemini,
   sanitizeHistory,
   formatPassages,
   extractiveAnswer,
