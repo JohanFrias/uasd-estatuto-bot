@@ -21,19 +21,19 @@ MySQL se usa para guardar el **historial de conversaciones** (el panel lateral).
 Requisitos: Node.js 18 o superior, MySQL en ejecución y una clave de API de OpenAI (<https://platform.openai.com/api-keys>).
 
 
-# 1. Instalar dependencias
+1. Instalar dependencias
 npm install
 
-# 2. Configurar variables de entorno
+2. Configurar variables de entorno
    .env
-#  Configura OPENAI_API_KEY, DB_USER y DB_PASSWORD en .env
+ Configura OPENAI_API_KEY, DB_USER y DB_PASSWORD en .env
 
-# 3. Descargar y procesar el Estatuto (una sola vez)
+3. Descargar y procesar el Estatuto (una sola vez)
 npm run build:data
 
-# 4. Iniciar
+4. Iniciar
 npm start
-# abre http://localhost:3000
+abre http://localhost:3000
 
 
 - El servidor crea la base de datos y las tablas automáticamente (`database/schema.sql` es solo documentación).
