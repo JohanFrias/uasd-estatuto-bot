@@ -1,0 +1,24 @@
+{
+  "name": "uasd-estatuto-chatbot",
+  "version": "1.0.0",
+  "description": "Chatbot con IA para consultar el Estatuto Orgánico de la Universidad Autónoma de Santo Domingo (UASD)",
+  "main": "server/index.js",
+  "license": "MIT",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node server/index.js",
+    "dev": "node --watch server/index.js",
+    "build:data": "node scripts/build-estatuto.js",
+    "test": "node --test \"tests/*.test.js\""
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "express-rate-limit": "^7.5.0",
+    "mysql2": "^3.11.5",
+    "openai": "^7.55.0",
+    "pdf-parse": "1.1.1"
+  }
+}
