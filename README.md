@@ -35,6 +35,30 @@ npm run build:data
 npm start
 abre http://localhost:3000
 
+## Publicar la interfaz en GitHub Pages
+
+La interfaz estática se puede publicar con `npm run deploy`. Después, en GitHub,
+ve a **Settings → Pages** y selecciona la rama `gh-pages` y la carpeta `/(root)`.
+La URL será <https://johanfrias.github.io/uasd-estatuto-bot/>.
+
+GitHub Pages no ejecuta el servidor Node.js. Por eso, esta publicación muestra
+la interfaz, pero las consultas y el historial no funcionarán hasta alojar
+también el backend en un servicio compatible y configurar la interfaz para usar
+su URL.
+
+### Conectar GitHub Pages con Render
+
+El archivo `render.yaml` configura el backend Express en Render. Para activarlo:
+
+1. Sube estos cambios a GitHub y, en Render, crea un **Blueprint** conectado a este repositorio.
+2. En la configuración del servicio, agrega `OPENAI_API_KEY` como variable secreta. No la pongas en archivos del repositorio ni en el frontend.
+3. Cuando Render termine el despliegue, copia la URL HTTPS del servicio y colócala como `API_BASE_URL` en `public/js/config.js`.
+4. Ejecuta `npm run deploy` para volver a publicar el frontend en GitHub Pages.
+
+El servicio de Render desactiva MySQL por defecto: el chat responde, pero el
+historial persistente no estará disponible. En el plan gratuito, el primer
+acceso después de un periodo sin uso puede tardar mientras el servicio se inicia.
+
 
 - El servidor crea la base de datos y las tablas automáticamente (`database/schema.sql` es solo documentación).
 - Si el paso 3 no puede descargar el PDF, descárgalo a mano y ejecuta  

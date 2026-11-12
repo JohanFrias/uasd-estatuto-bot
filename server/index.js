@@ -15,6 +15,7 @@ const { Retriever } = require('./services/retriever');
 const { loadEstatutoData, buildEstatutoData } = require('./services/estatutoStore');
 const { createApiRouter } = require('./routes/api');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
+const { createCorsMiddleware } = require('./middleware/cors');
 
 /** Carga el Estatuto procesado; si no existe intenta descargarlo y procesarlo. */
 async function loadRetriever() {
@@ -44,6 +45,8 @@ async function main() {
 
   const app = express();
   app.disable('x-powered-by');
+  app.set('trust proxy', config.trustProxy);
+  app.use(createCorsMiddleware(config.cors.allowedOrigins));
   app.use(express.json({ limit: '50kb' }));
 
   app.use('/api', createApiRouter({ retriever, ai, db }));

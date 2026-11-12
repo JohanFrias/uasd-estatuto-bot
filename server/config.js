@@ -14,6 +14,14 @@ const toNumber = (value, fallback) => {
 
 module.exports = {
   port: toNumber(process.env.PORT, 3000),
+  trustProxy: process.env.TRUST_PROXY === 'true' ? 1 : false,
+
+  cors: {
+    allowedOrigins: (process.env.ALLOWED_ORIGINS || 'https://johanfrias.github.io')
+      .split(',')
+      .map((origin) => origin.trim())
+      .filter(Boolean),
+  },
 
   openai: {
     apiKey: process.env.OPENAI_API_KEY || '',

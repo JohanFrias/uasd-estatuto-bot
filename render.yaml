@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: uasd-estatuto-bot-api
+    runtime: node
+    plan: free
+    buildCommand: npm ci
+    startCommand: npm start
+    healthCheckPath: /api/health
+    envVars:
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: DB_ENABLED
+        value: "false"
+      - key: TRUST_PROXY
+        value: "true"
+      - key: ALLOWED_ORIGINS
+        value: https://johanfrias.github.io
