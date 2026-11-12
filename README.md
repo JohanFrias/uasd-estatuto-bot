@@ -41,11 +41,30 @@ abre http://localhost:3000
   `npm run build:data -- ruta/al/ESTATUTO-ORGANICO-UASD.pdf`.
 - Sin `OPENAI_API_KEY`, o si OpenAI no está disponible, la app responde en modo básico con los fragmentos más relacionados del Estatuto.
 
-## Cómo funciona
+## Arquitectura del sistema
+
+La aplicación se organiza en tres partes:
+
+1. **Frontend (`public/`)** presenta el chat, envía preguntas a la API del servidor y muestra las respuestas y sus fuentes.
+2. **Backend (`server/`)** expone las rutas HTTP, valida las preguntas, busca los fragmentos pertinentes, coordina la generación de respuestas y, si está disponible, guarda el historial en MySQL.
+3. **Datos del Estatuto (`data/`)** contienen el PDF original y el documento estructurado que el servidor usa para la búsqueda.
+
+El navegador nunca necesita la clave de OpenAI: las llamadas al proveedor se realizan desde el servidor. MySQL se usa únicamente para el historial; si no está disponible, el chat sigue funcionando sin esa función.
+
+## Integración de la inteligencia artificial
+
+El backend usa el SDK oficial de OpenAI y lee `OPENAI_API_KEY` desde las variables de entorno. El modelo se puede indicar con `OPENAI_MODEL`; por defecto se usa `gpt-4o-mini`.
+
+La solicitud a OpenAI incluye instrucciones de sistema y los fragmentos recuperados del Estatuto. Se instruye al modelo a responder en español, no inventar información y citar los artículos pertinentes. La clave debe mantenerse en el servidor y no debe añadirse al frontend ni subirse al repositorio.
+
+Si no hay una clave configurada o la API no está disponible, el sistema muestra una respuesta extractiva con los fragmentos más relacionados. Si la cuenta de OpenAI no tiene crédito o cuota, hay que revisar su facturación y límites.
 
 
-Medidas contra respuestas inventadas:
-- La IA solo ve los fragmentos recuperados y tiene instrucciones estrictas de no usar conocimiento externo.
-- Si la búsqueda no encuentra nada relevante, ni siquiera se consulta a la IA.
-- Las instrucciones incluidas en la pregunta o en el texto no pueden anular las reglas del sistema.
-- La interfaz recuerda que la respuesta debe verificarse en el documento oficial.
+## Integración de la inteligencia artificial
+
+El backend usa el SDK oficial de OpenAI y lee `OPENAI_API_KEY` desde las variables de entorno. El modelo se puede indicar con `OPENAI_MODEL`; por defecto se usa `gpt-4o-mini`.
+
+La solicitud a OpenAI incluye instrucciones de sistema y los fragmentos recuperados del Estatuto. Se instruye al modelo a responder en español, no inventar información y citar los artículos pertinentes. La clave debe mantenerse en el servidor y no debe añadirse al frontend ni subirse al repositorio.
+
+Si no hay una clave configurada o la API no está disponible, el sistema muestra una respuesta extractiva con los fragmentos más relacionados. Si la cuenta de OpenAI no tiene crédito o cuota, hay que revisar su facturación y límites.
+
