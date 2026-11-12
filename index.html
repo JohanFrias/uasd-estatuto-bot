@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Asistente del Estatuto Orgánico · UASD</title>
+  <meta name="description" content="Consulta el Estatuto Orgánico de la Universidad Autónoma de Santo Domingo con ayuda de inteligencia artificial." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231e2f8f'/%3E%3Cpath d='M12 26 32 16l20 10-20 10z' fill='white'/%3E%3Cpath d='M20 33v10c0 4 24 4 24 0V33l-12 6z' fill='white' opacity='.85'/%3E%3C/svg%3E" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+  <div class="app" id="app">
+
+    <!-- Barra lateral: historial de conversaciones -->
+    <aside class="sidebar" id="sidebar" aria-label="Historial de conversaciones">
+      <div class="brand">
+        <span class="brand-logo" aria-hidden="true">
+          <svg viewBox="0 0 64 64" width="28" height="28"><path d="M8 26 32 14l24 12-24 12z" fill="currentColor"/><path d="M18 34v11c0 5 28 5 28 0V34l-14 7z" fill="currentColor" opacity=".85"/></svg>
+        </span>
+        <div>
+          <strong>UASD</strong>
+          <span>Estatuto Orgánico</span>
+        </div>
+      </div>
+
+      <button class="btn btn-primary btn-block" id="newChatBtn" type="button">+ Nueva conversación</button>
+
+      <h2 class="sidebar-title">Historial</h2>
+      <ul class="history-list" id="historyList"></ul>
+      <p class="history-empty" id="historyEmpty"></p>
+    </aside>
+    <div class="backdrop" id="backdrop" hidden></div>
+
+    <!-- Zona principal -->
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn menu-btn" id="menuBtn" type="button" aria-label="Abrir historial" aria-controls="sidebar" aria-expanded="false">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        </button>
+        <h1>Asistente del Estatuto Orgánico</h1>
+        <span class="status-badge" id="statusBadge" hidden></span>
+      </header>
+
+      <section class="chat" id="chat" aria-live="polite" aria-label="Conversación">
+        <!-- Pantalla de bienvenida con preguntas sugeridas -->
+        <div class="welcome" id="welcome">
+          <h2>¿Qué quieres saber del Estatuto Orgánico?</h2>
+          <p>Pregunta en tus propias palabras o elige una de las preguntas sugeridas. Las respuestas se basan en el documento oficial de la Universidad Autónoma de Santo Domingo.</p>
+          <div id="welcomeSuggestions"></div>
+        </div>
+        <div class="messages" id="messages"></div>
+      </section>
+
+      <footer class="composer">
+        <div class="suggestion-bar" id="suggestionBar" hidden></div>
+        <form class="composer-form" id="chatForm" autocomplete="off">
+          <label for="messageInput" class="sr-only">Escribe tu pregunta</label>
+          <textarea id="messageInput" rows="1" maxlength="500" placeholder="Escribe tu pregunta sobre el Estatuto…" required></textarea>
+          <button class="btn btn-primary send-btn" id="sendBtn" type="submit">
+            <span>Enviar</span>
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M22 2 11 13M22 2l-7 20-4-9-9-4z"/></svg>
+          </button>
+        </form>
+        <p class="disclaimer">Las respuestas las genera una IA a partir del Estatuto y pueden contener errores. Verifica siempre en el <a href="https://postgrado.uasd.edu.do/wp-content/uploads/2024/06/ESTATUTO-ORGANICO-UASD.pdf" target="_blank" rel="noopener">documento oficial</a>.</p>
+      </footer>
+    </main>
+  </div>
+
+  <script type="module" src="js/main.js"></script>
+</body>
+</html>
