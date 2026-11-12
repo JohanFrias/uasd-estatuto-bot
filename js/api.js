@@ -3,6 +3,10 @@
  * Todas las funciones lanzan ApiError con un mensaje listo para mostrar al usuario.
  */
 
+import { API_BASE_URL } from './config.js';
+
+const apiBaseUrl = API_BASE_URL.replace(/\/+$/, '');
+
 export class ApiError extends Error {
   constructor(message, status = 0) {
     super(message);
@@ -15,7 +19,7 @@ async function request(path, { method = 'GET', body, timeout = 45000 } = {}) {
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeout);
   try {
-    const res = await fetch(`/api${path}`, {
+    const res = await fetch(`${apiBaseUrl}/api${path}`, {
       method,
       headers: body ? { 'Content-Type': 'application/json' } : undefined,
       body: body ? JSON.stringify(body) : undefined,
